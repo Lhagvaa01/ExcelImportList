@@ -4,6 +4,7 @@ import { Flex, Layout } from "antd";
 import ContentPage from "./Pages/Content";
 import ResponsiveAppBar from "./Components/AppBar";
 import ResponsiveFooter from "./Components/Footer";
+import { Routes, Route } from "react-router-dom";
 
 const { Header, Footer, Sider, Content } = Layout;
 
@@ -53,7 +54,9 @@ function App() {
             Sider
           </Sider> */}
           <Content style={contentStyle}>
-            <ContentPage />
+            <Routes>
+              <Route path="/*" element={<ContentPage />} />
+            </Routes>
           </Content>
         </Layout>
         <Footer style={footerStyle}>

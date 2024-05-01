@@ -20,6 +20,7 @@
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "react-highlight-words": "^0.20.0",
+    "react-router-dom": "^6.23.0",
     "react-scripts": "5.0.1",
     "styled-components": "^6.1.9",
     "tailwindcss": "^3.4.3",
@@ -51,10 +52,10 @@
     ]
   },
   "devDependencies": {
+    "babel": "@babel/plugin-proposal-private-property-in-object",
     "eslint": "^8.57.0",
     "tailwindcss": "^3.3.2",
-    "webpack-dev-server": "^5.0.2",
-    "babel":"@babel/plugin-proposal-private-property-in-object"
+    "webpack-dev-server": "^5.0.2"
   },
   "description": "This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).",
   "main": "tailwind.config.js",
