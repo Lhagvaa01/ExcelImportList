@@ -1,11 +1,30 @@
-import React, { useRef, useState } from "react";
+import React, { useRef, useState, useEffect } from "react";
 import { Form, Input, InputNumber, Popconfirm, Table, Typography } from "antd";
 import { SearchOutlined } from "@ant-design/icons";
 import { Button, Space } from "antd";
 import Highlighter from "react-highlight-words";
 import { UploadOutlined } from "@ant-design/icons";
-import { message, Upload } from "antd";
+import { message, Upload, MenuProps } from "antd";
 import * as XLSX from "xlsx";
+
+import { DownOutlined } from "@ant-design/icons";
+import { Dropdown, Menu } from "antd";
+
+import secureLocalStorage from "react-secure-storage";
+import { Link, useNavigate } from "react-router-dom";
+
+const items = [
+  {
+    key: "1",
+    label: "Доод үнэ",
+    price: "15.000",
+  },
+  {
+    key: "2",
+    label: "VIP үнэ",
+    price: "20.000",
+  },
+];
 
 // const props = {
 //   name: "file",
@@ -33,6 +52,7 @@ for (let i = 0; i < 100; i++) {
     name: `Edward ${i}`,
     group: `London Park no. ${i}`,
     price: 32,
+    price: items[0].price,
     barcode: parseInt(8652145224 + "" + i),
   });
 }
@@ -71,6 +91,11 @@ const EditableCell = ({
   );
 };
 const ContentPage = () => {
+  // SelectPrice;
+  const [selectPrice, setSelectPrice] = useState(
+    items[0] ? items[0].price : null
+  );
+
   const [form] = Form.useForm();
   const [data, setData] = useState(originData);
   const [editingKey, setEditingKey] = useState("");
@@ -100,6 +125,7 @@ const ContentPage = () => {
         name: row["Барааны нэр"],
         group: row["Зарагдах тасаг"],
         price: row["Борлуулах үнэ"],
+        selectPrice: 15000,
         barcode: row["Баар код"],
       }));
       setData(updatedData);
@@ -269,6 +295,12 @@ const ContentPage = () => {
   const cancel = () => {
     setEditingKey("");
   };
+
+  const handleMenuClick = (e) => {
+    const selectedItem = items.find((item) => item.key === e.key);
+    setSelectPrice(selectedItem);
+  };
+
   const save = async (key) => {
     try {
       const row = await form.validateFields();
@@ -281,6 +313,7 @@ const ContentPage = () => {
           ...row,
         });
         setData(newData);
+        console.log(newData);
         setEditingKey("");
       } else {
         newData.push(row);
@@ -321,6 +354,31 @@ const ContentPage = () => {
       ...getColumnSearchProps("price"),
     },
     {
+      title: "Boucher and PV",
+      dataIndex: "selectPrice",
+      width: "10%",
+      render: (_, record) => {
+        // console.log(record.key);
+        return (
+          <Dropdown
+            overlay={
+              <Menu onClick={handleMenuClick}>
+                {items.map((item) => (
+                  <Menu.Item key={item.key}>
+                    {item.label}: {item.price}
+                  </Menu.Item>
+                ))}
+              </Menu>
+            }
+          >
+            <Button>
+              {selectPrice.price} <DownOutlined />
+            </Button>
+          </Dropdown>
+        );
+      },
+    },
+    {
       title: "Баар код",
       dataIndex: "barcode",
       width: "20%",
@@ -358,6 +416,7 @@ const ContentPage = () => {
       },
     },
   ];
+
   const mergedColumns = columns.map((col) => {
     if (!col.editable) {
       return col;
@@ -374,44 +433,115 @@ const ContentPage = () => {
     };
   });
 
+  const [userInfo, setUserInfo] = useState(() => {
+    const storedUserInfo = secureLocalStorage.getItem("userInfo");
+    console.log(JSON.parse(storedUserInfo));
+    return storedUserInfo ? JSON.parse(storedUserInfo) : null;
+  });
+
+  const navigate = useNavigate();
+  const handleLogin = () => {
+    navigate(`/Login`);
+  };
+
+  const exportToExcel = () => {
+    const fileType =
+      "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;charset=UTF-8";
+    const fileExtension = ".xlsx";
+    const fileName = "BaraaniiMedeelel"; // Change to your desired file name
+
+    // Prepare data for Excel format
+    const exportData = data.map((item) => ({
+      "Дотоод код": item.code,
+      "Барааны нэр": item.name,
+      Тасаг: item.group,
+      Үнэ: item.price,
+      "Boucher and PV": selectPrice.price,
+      "Баар код": item.barcode,
+    }));
+
+    // Create a new workbook
+    const ws = XLSX.utils.json_to_sheet(exportData);
+    const wb = { Sheets: { data: ws }, SheetNames: ["data"] };
+    const excelBuffer = XLSX.write(wb, { bookType: "xlsx", type: "array" });
+    const dataFile = new Blob([excelBuffer], { type: fileType });
+    const url = URL.createObjectURL(dataFile);
+
+    // Trigger file download
+    const link = document.createElement("a");
+    link.href = url;
+    link.setAttribute("download", fileName + fileExtension);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
   return (
-    <div className="pt-10 px-10">
-      <div className="flex pb-5 h-12 w-full  justify-between items-center">
-        <div className="text-black text-2xl">Барааны мэдээлэл</div>
+    <div>
+      {userInfo != null ? (
         <div>
-          <label
-            htmlFor="file-upload"
-            className="flex  items-center cursor-pointer border border-gray-600 hover:border-blue-600 gap-3 h-12 bg-white hover:text-blue-600 text-black font-bold py-2 px-4 rounded"
-          >
-            <UploadOutlined />
-            Excel file Upload
-          </label>
-          <input
-            id="file-upload"
-            type="file"
-            className="hidden h-12"
-            onChange={handleFileUpload}
-            accept=".xlsx, .xls"
-          />
+          <div className="pt-10 px-10">
+            <div className="flex pb-5 h-12 w-full  justify-between items-center">
+              <div className="flex text-black text-2xl">Барааны мэдээлэл</div>
+              <div className="flex gap-10">
+                <label
+                  onClick={exportToExcel}
+                  className="flex  items-center cursor-pointer border border-gray-600 hover:border-blue-600 gap-3 h-12 bg-white hover:text-blue-600 text-black font-bold py-2 px-4 rounded"
+                >
+                  <UploadOutlined />
+                  Export Excel
+                </label>
+                <label
+                  htmlFor="file-upload"
+                  className="flex  items-center cursor-pointer border border-gray-600 hover:border-blue-600 gap-3 h-12 bg-white hover:text-blue-600 text-black font-bold py-2 px-4 rounded"
+                >
+                  <UploadOutlined />
+                  Excel file Upload
+                </label>
+                <input
+                  id="file-upload"
+                  type="file"
+                  className="hidden h-12"
+                  onChange={handleFileUpload}
+                  accept=".xlsx, .xls"
+                />
+                {/* <Button onClick={exportToExcel}>Export to Excel</Button> */}
+              </div>
+            </div>
+            <Form form={form} component={false}>
+              <Table
+                loading={isLoading}
+                components={{
+                  body: {
+                    cell: EditableCell,
+                  },
+                }}
+                bordered
+                dataSource={data}
+                columns={mergedColumns}
+                rowClassName="editable-row"
+                pagination={{
+                  onChange: cancel,
+                }}
+              />
+            </Form>
+          </div>
         </div>
-      </div>
-      <Form form={form} component={false}>
-        <Table
-          loading={isLoading}
-          components={{
-            body: {
-              cell: EditableCell,
-            },
-          }}
-          bordered
-          dataSource={data}
-          columns={mergedColumns}
-          rowClassName="editable-row"
-          pagination={{
-            onChange: cancel,
-          }}
-        />
-      </Form>
+      ) : (
+        <div className="flex w-full justify-center items-center">
+          <div className="grid lg:mt-20 2xl:mx-72 mx-8 mt-3 mb-28 h-96 w-1/3  justify-center items-center bg-white rounded-xl shadow-md">
+            <div className="text-black font-bold text-2xl">
+              Та эхлээд тэвтрэнэ үү
+            </div>
+            <button
+              onClick={handleLogin}
+              className="bg-green-500 text-white rounded-lg px-4 py-2 w-full h-14 items-center justify-center flex"
+            >
+              Нэвтрэх
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

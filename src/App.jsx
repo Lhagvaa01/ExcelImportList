@@ -2,9 +2,15 @@ import logo from "./logo.svg";
 import "./App.css";
 import { Flex, Layout } from "antd";
 import ContentPage from "./Pages/Content";
+import LoginPage from "./Pages/Login";
+import SignUp from "./Pages/SignUp";
+import Profile from "./Pages/Profile";
 import ResponsiveAppBar from "./Components/AppBar";
 import ResponsiveFooter from "./Components/Footer";
 import { Routes, Route } from "react-router-dom";
+
+import { ToastContainer, toast } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 
 const { Header, Footer, Sider, Content } = Layout;
 
@@ -46,6 +52,7 @@ function App() {
   return (
     <div className="App">
       <Layout style={layoutStyle}>
+        <ToastContainer />
         <Header style={headerStyle}>
           <ResponsiveAppBar />
         </Header>
@@ -56,6 +63,9 @@ function App() {
           <Content style={contentStyle}>
             <Routes>
               <Route path="/*" element={<ContentPage />} />
+              <Route path="/Login" element={<LoginPage />} />
+              <Route path="/SignUp" element={<SignUp />} />
+              <Route path="/Profile" element={<Profile />} />
             </Routes>
           </Content>
         </Layout>
